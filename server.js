@@ -17,6 +17,7 @@ var redis_host = 'redis-cluster.qaonoo.0001.euc1.cache.amazonaws.com';
 var app = express();
 var server = http.createServer(app);
 var io = socket.listen(server);
+
 io.adapter(socket_redis({ host: redis_host, port: 6379 }));
 
 var redisClient = redis.createClient(6379, redis_host);
@@ -25,8 +26,6 @@ redisClient.on("connect", function () {
 	redisClient.set("foo_key", "some fantastic value", redis.print);
 	redisClient.get("foo_key", redis.print);
 });
-
-
 
 var hostname = os.hostname();
 
@@ -59,6 +58,7 @@ app.get('/partials/:name', function (req, res) {
 });
 
 io.on('connection', function(s) {
+
 	io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] a user connected');
 	s.on('disconnect', function() {
 		io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] a user disconnected');
@@ -69,6 +69,7 @@ io.on('connection', function(s) {
 	});
 
 	s.on('chat message', function(msg){
+
 		io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] ' + msg);
 	});
 });
