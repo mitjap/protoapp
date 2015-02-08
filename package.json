@@ -1,0 +1,15 @@
+{
+  "name": "proto-app",
+  "description": "best protoapp ever",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "errorhandler": "^1.3.3",
+    "express": "4.x",
+    "jade": "*",
+    "socket.io": "1.*"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
