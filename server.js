@@ -2,16 +2,33 @@ var express = require('express');
 var errorHandler = require('errorhandler');
 var path = require('path');
 var socket = require('socket.io');
+var socket_redis = require('socket.io-redis');
+var redis = require('redis');
 var routes = require('./routes');
 var http = require('http');
+var os = require('os');
 
 //var cluster = require('cluster');
+
+//var redis_host = 'localhost';
+var redis_host = 'redis-cluster.qaonoo.0001.euc1.cache.amazonaws.com';
+
 
 var app = express();
 var server = http.createServer(app);
 var io = socket.listen(server);
+io.adapter(socket_redis({ host: redis_host, port: 6379 }));
 
-var ipAddress = address = server.address() && server.address().address || "localhost";
+var redisClient = redis.createClient(6379, redis_host);
+
+redisClient.on("connect", function () {
+	redisClient.set("foo_key", "some fantastic value", redis.print);
+	redisClient.get("foo_key", redis.print);
+});
+
+
+
+var hostname = os.hostname();
 
 // all environments
 
@@ -41,14 +58,18 @@ app.get('/partials/:name', function (req, res) {
   res.render('partials/' + name);
 });
 
-io.on('connection', function(socket) {
-	io.emit('chat message', '[' + ipAddress + '] a user connected');
-	socket.on('disconnect', function() {
-		io.emit('chat message', '[' + ipAddress + '] a user disconnected');
+io.on('connection', function(s) {
+	io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] a user connected');
+	s.on('disconnect', function() {
+		io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] a user disconnected');
+
+		redisClient.get("foo_key", function(err, reply) {
+			io.emit(reply);
+		});
 	});
 
-	socket.on('chat message', function(msg){
-		io.emit('chat message', '[' + ipAddress + '] ' + msg);
+	s.on('chat message', function(msg){
+		io.emit('chat message', '[' + new Date().toTimeString() + ' - ' + hostname + '] ' + msg);
 	});
 });
 
